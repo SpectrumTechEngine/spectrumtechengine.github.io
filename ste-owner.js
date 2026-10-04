@@ -40,8 +40,9 @@
     messagingSenderId: '829458613758',
     appId: '1:829458613758:web:4e620c438e6cfcf526acaf',
   };
-  const LIVE = /(^|\.)thespectrumtechengine\.com$/i.test(location.hostname) || new URLSearchParams(location.search).has('ste-live');
   const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  // counts on the website and inside the Android apps (some carry their own copy of the app), never on a test computer
+  const LIVE = /(^|\.)thespectrumtechengine\.com$/i.test(location.hostname) || NATIVE || new URLSearchParams(location.search).has('ste-live');
   const KIND = NATIVE ? 'apk' : (matchMedia('(display-mode: standalone)').matches || navigator.standalone) ? 'installed' : 'web';
   const TAPS = 5, TAP_WINDOW = 2500, MAX_WRONG = 5, LOCKOUT = 60 * 60 * 1000;
 
@@ -216,8 +217,10 @@
   /* ---------------- unlocking: 5 quick taps on the STE badge ---------------- */
   let taps = [];
   const isBadge = el => el && el.closest && el.closest('[data-ste-badge], img.ste-logo, img[alt*="Spectrum Tech Engine" i], [aria-label*="Spectrum Tech Engine" i], .ste-logo, .steLogo, .ste-badge');
+  // an app with its own owner tools on the badge (What's 4 the Gaff) sets data-badge="off" and opens these with STE.openOwner()
+  const BADGE_OFF = !!(me && me.dataset.badge === 'off');
   document.addEventListener('click', e => {
-    if (!isBadge(e.target)) return;
+    if (BADGE_OFF || !isBadge(e.target)) return;
     const now = Date.now(); taps = taps.filter(t => now - t < TAP_WINDOW); taps.push(now);
     if (taps.length >= TAPS) { taps = []; e.preventDefault(); openOwner(); }
   }, true);
