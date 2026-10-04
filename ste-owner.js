@@ -215,7 +215,7 @@
 
   /* ---------------- unlocking: 5 quick taps on the STE badge ---------------- */
   let taps = [];
-  const isBadge = el => el && el.closest && el.closest('[data-ste-badge], img.ste-logo, img[alt*="Spectrum Tech Engine" i], .ste-logo, .ste-badge');
+  const isBadge = el => el && el.closest && el.closest('[data-ste-badge], img.ste-logo, img[alt*="Spectrum Tech Engine" i], [aria-label*="Spectrum Tech Engine" i], .ste-logo, .steLogo, .ste-badge');
   document.addEventListener('click', e => {
     if (!isBadge(e.target)) return;
     const now = Date.now(); taps = taps.filter(t => now - t < TAP_WINDOW); taps.push(now);
