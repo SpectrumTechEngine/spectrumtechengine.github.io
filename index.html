@@ -324,43 +324,7 @@
      apk: (optional) link to the Android app. Shows an "Android app" button.
      ========================================================= */
   const APPS = [
-    {
-      name: "The Kitchen Test",
-      emoji: "☕",
-      category: "game",
-      status: "live",
-      link: "https://thespectrumtechengine.com/kitchen-test/",
-      description: "Making a cup of tea is harder than you think. Seven stages, one kettle, zero mercy.",
-      chips: ["Tilt or tap", "Win a certificate"]
-    },
-    {
-      name: "Orbital One",
-      emoji: "🚀",
-      category: "game",
-      status: "live",
-      link: "https://thespectrumtechengine.com/Orbital-One/",
-      description: "Slingshot your ship around planets and into the portal. 192 levels across 12 universes.",
-      chips: ["Space physics"]
-    },
-    {
-      name: "Gravity Trampoline: The Smiles",
-      emoji: "😊",
-      category: "game",
-      status: "live",
-      link: "https://thespectrumtechengine.com/Gravity-Trampoline-smiles/",
-      apk: "https://github.com/SpectrumTechEngine/Gravity-Trampoline-smiles/releases/latest/download/gravity-trampoline-smiles.apk",
-      description: "Draw trampolines to bounce the ball past the frowny faces and into the portal. Made for kids.",
-      chips: ["Draw & bounce", "Kids"]
-    },
-    {
-      name: "Gravity Trampoline: The Future",
-      emoji: "🛸",
-      category: "game",
-      status: "live",
-      link: "https://thespectrumtechengine.com/Gravity-Trampoline-future/",
-      description: "The same draw-and-bounce puzzles in a futuristic world. Dodge the obstacles and land the ball in the portal.",
-      chips: ["Draw & bounce", "Pick a world"]
-    },
+    // GAMES: Hospital Trolly Launch stays first. Add each NEW game straight below it (newest first).
     {
       name: "Hospital Trolly Launch",
       emoji: "🛏️",
@@ -371,40 +335,14 @@
       chips: ["Tap to race", "Pick your hospital"]
     },
     {
-      name: "Quiet Down You!",
-      emoji: "🤫",
+      name: "Prismwing: The Return of Solas",
+      emoji: "🌈",
       category: "game",
       status: "live",
-      link: "https://thespectrumtechengine.com/quite-you/",
-      description: "The family noise police. Get too loud and the phone yells back, and it keeps score of who's in the hot seat.",
-      chips: ["Noise meter", "Family scores"]
-    },
-    {
-      name: "The Favourite Child",
-      emoji: "👑",
-      category: "game",
-      status: "live",
-      link: "https://thespectrumtechengine.com/the-favourite-child/",
-      description: "Match your kids' photos against the clock to settle the family debate once and for all. Then share the certificate on WhatsApp.",
-      chips: ["Photo match", "WhatsApp certificate"]
-    },
-    {
-      name: "Edunts Extreme Trucking",
-      emoji: "🚛",
-      category: "game",
-      status: "live",
-      link: "https://thespectrumtechengine.com/edunts-extreme-trucking/",
-      description: "Blast through the pick-up, haul it, blast through the drop-off. Every delivery pays €50, the traffic keeps getting faster, and ten crashes ends your day.",
-      chips: ["Steer & floor it", "Beat your best day"]
-    },
-    {
-      name: "Archer Duel: The King's Hunt",
-      emoji: "🏹",
-      category: "game",
-      status: "live",
-      link: "https://thespectrumtechengine.com/archer-duel/",
-      description: "Two hunters, one royal forest. Draw back, loose your arrow and bring down the finer bag, from ravens to eagles. Play a friend on the same screen or take on the computer.",
-      chips: ["Draw & loose", "2 players or vs computer"]
+      link: "https://thespectrumtechengine.com/prismwing/",
+      apk: "https://github.com/SpectrumTechEngine/prismwing/releases/latest/download/prismwing.apk",
+      description: "Anmorolc has drained the light from the universe. Fly the Prismwing through seven colour worlds, burn back the acid storms, beat each world's boss and bring the seven Prism Shards home.",
+      chips: ["Fly & shoot", "7 worlds, 7 bosses"]
     },
     {
       name: "PottyMouthPocket",
@@ -417,14 +355,77 @@
       chips: ["Group game", "Cleanest mouth wins"]
     },
     {
-      name: "Prismwing: The Return of Solas",
-      emoji: "🌈",
+      name: "Archer Duel: The King's Hunt",
+      emoji: "🏹",
       category: "game",
       status: "live",
-      link: "https://thespectrumtechengine.com/prismwing/",
-      apk: "https://github.com/SpectrumTechEngine/prismwing/releases/latest/download/prismwing.apk",
-      description: "Anmorolc has drained the light from the universe. Fly the Prismwing through seven colour worlds, burn back the acid storms, beat each world's boss and bring the seven Prism Shards home.",
-      chips: ["Fly & shoot", "7 worlds, 7 bosses"]
+      link: "https://thespectrumtechengine.com/archer-duel/",
+      description: "Two hunters, one royal forest. Draw back, loose your arrow and bring down the finer bag, from ravens to eagles. Play a friend on the same screen or take on the computer.",
+      chips: ["Draw & loose", "2 players or vs computer"]
+    },
+    {
+      name: "Edunts Extreme Trucking",
+      emoji: "🚛",
+      category: "game",
+      status: "live",
+      link: "https://thespectrumtechengine.com/edunts-extreme-trucking/",
+      description: "Blast through the pick-up, haul it, blast through the drop-off. Every delivery pays €50, the traffic keeps getting faster, and ten crashes ends your day.",
+      chips: ["Steer & floor it", "Beat your best day"]
+    },
+    {
+      name: "The Favourite Child",
+      emoji: "👑",
+      category: "game",
+      status: "live",
+      link: "https://thespectrumtechengine.com/the-favourite-child/",
+      description: "Match your kids' photos against the clock to settle the family debate once and for all. Then share the certificate on WhatsApp.",
+      chips: ["Photo match", "WhatsApp certificate"]
+    },
+    {
+      name: "Quiet Down You!",
+      emoji: "🤫",
+      category: "game",
+      status: "live",
+      link: "https://thespectrumtechengine.com/quite-you/",
+      description: "The family noise police. Get too loud and the phone yells back, and it keeps score of who's in the hot seat.",
+      chips: ["Noise meter", "Family scores"]
+    },
+    {
+      name: "Gravity Trampoline: The Future",
+      emoji: "🛸",
+      category: "game",
+      status: "live",
+      link: "https://thespectrumtechengine.com/Gravity-Trampoline-future/",
+      description: "The same draw-and-bounce puzzles in a futuristic world. Dodge the obstacles and land the ball in the portal.",
+      chips: ["Draw & bounce", "Pick a world"]
+    },
+    {
+      name: "Gravity Trampoline: The Smiles",
+      emoji: "😊",
+      category: "game",
+      status: "live",
+      link: "https://thespectrumtechengine.com/Gravity-Trampoline-smiles/",
+      apk: "https://github.com/SpectrumTechEngine/Gravity-Trampoline-smiles/releases/latest/download/gravity-trampoline-smiles.apk",
+      description: "Draw trampolines to bounce the ball past the frowny faces and into the portal. Made for kids.",
+      chips: ["Draw & bounce", "Kids"]
+    },
+    {
+      name: "Orbital One",
+      emoji: "🚀",
+      category: "game",
+      status: "live",
+      link: "https://thespectrumtechengine.com/Orbital-One/",
+      description: "Slingshot your ship around planets and into the portal. 192 levels across 12 universes.",
+      chips: ["Space physics"]
+    },
+    {
+      name: "The Kitchen Test",
+      emoji: "☕",
+      category: "game",
+      status: "live",
+      link: "https://thespectrumtechengine.com/kitchen-test/",
+      description: "Making a cup of tea is harder than you think. Seven stages, one kettle, zero mercy.",
+      chips: ["Tilt or tap", "Win a certificate"]
     },
     {
       name: "Food Detective",
