@@ -324,7 +324,27 @@
      apk: (optional) link to the Android app. Shows an "Android app" button.
      ========================================================= */
   const APPS = [
-    // GAMES: Hospital Trolly Launch stays first. Add each NEW game straight below it (newest first).
+    // GAMES: quick no-commitment games first (Edunts, Archer Duel, Hospital Trolly), then best first. Ask the owner where each NEW game goes.
+    {
+      name: "Edunts Extreme Trucking",
+      emoji: "🚛",
+      category: "game",
+      status: "live",
+      link: "https://thespectrumtechengine.com/edunts-extreme-trucking/",
+      apk: "https://github.com/SpectrumTechEngine/edunts-extreme-trucking/releases/latest/download/edunts-extreme-trucking.apk",
+      description: "Blast through the pick-up, haul it, blast through the drop-off. Every delivery pays €50, the traffic keeps getting faster, and ten crashes ends your day.",
+      chips: ["Steer & floor it", "Beat your best day"]
+    },
+    {
+      name: "Archer Duel: The King's Hunt",
+      emoji: "🏹",
+      category: "game",
+      status: "live",
+      link: "https://thespectrumtechengine.com/archer-duel/",
+      apk: "https://github.com/SpectrumTechEngine/archer-duel/releases/latest/download/archer-duel.apk",
+      description: "Two hunters, one royal forest. Draw back, loose your arrow and bring down the finer bag, from ravens to eagles. Play a friend on the same screen or take on the computer.",
+      chips: ["Draw & loose", "2 players or vs computer"]
+    },
     {
       name: "Hospital Trolly Launch",
       emoji: "🛏️",
@@ -346,34 +366,44 @@
       chips: ["Fly & shoot", "7 worlds, 7 bosses"]
     },
     {
-      name: "PottyMouthPocket",
-      emoji: "🤬",
+      name: "Orbital One",
+      emoji: "🚀",
       category: "game",
       status: "live",
-      link: "https://thespectrumtechengine.com/potty-mouth/",
-      apk: "https://github.com/SpectrumTechEngine/potty-mouth/releases/latest/download/potty-mouth.apk",
-      description: "The swear jar with a difference. Catch your friends, family or workmates swearing, they accept or dispute it, and at the end of the round the cleanest mouth collects the jar.",
-      chips: ["Group game", "Cleanest mouth wins"]
+      link: "https://thespectrumtechengine.com/Orbital-One/",
+      apk: "https://github.com/SpectrumTechEngine/Orbital-One/releases/latest/download/orbital-one.apk",
+      description: "Slingshot your ship around planets and into the portal. 192 levels across 12 universes.",
+      chips: ["Space physics"]
     },
     {
-      name: "Archer Duel: The King's Hunt",
-      emoji: "🏹",
+      name: "Gravity Trampoline: The Future",
+      emoji: "🛸",
       category: "game",
       status: "live",
-      link: "https://thespectrumtechengine.com/archer-duel/",
-      apk: "https://github.com/SpectrumTechEngine/archer-duel/releases/latest/download/archer-duel.apk",
-      description: "Two hunters, one royal forest. Draw back, loose your arrow and bring down the finer bag, from ravens to eagles. Play a friend on the same screen or take on the computer.",
-      chips: ["Draw & loose", "2 players or vs computer"]
+      link: "https://thespectrumtechengine.com/Gravity-Trampoline-future/",
+      apk: "https://github.com/SpectrumTechEngine/Gravity-Trampoline-future/releases/latest/download/gravity-trampoline-future.apk",
+      description: "The same draw-and-bounce puzzles in a futuristic world. Dodge the obstacles and land the ball in the portal.",
+      chips: ["Draw & bounce", "Pick a world"]
     },
     {
-      name: "Edunts Extreme Trucking",
-      emoji: "🚛",
+      name: "The Kitchen Test",
+      emoji: "☕",
       category: "game",
       status: "live",
-      link: "https://thespectrumtechengine.com/edunts-extreme-trucking/",
-      apk: "https://github.com/SpectrumTechEngine/edunts-extreme-trucking/releases/latest/download/edunts-extreme-trucking.apk",
-      description: "Blast through the pick-up, haul it, blast through the drop-off. Every delivery pays €50, the traffic keeps getting faster, and ten crashes ends your day.",
-      chips: ["Steer & floor it", "Beat your best day"]
+      link: "https://thespectrumtechengine.com/kitchen-test/",
+      apk: "https://github.com/SpectrumTechEngine/kitchen-test/releases/latest/download/kitchen-test.apk",
+      description: "Making a cup of tea is harder than you think. Seven stages, one kettle, zero mercy.",
+      chips: ["Tilt or tap", "Win a certificate"]
+    },
+    {
+      name: "Gravity Trampoline: The Smiles",
+      emoji: "😊",
+      category: "game",
+      status: "live",
+      link: "https://thespectrumtechengine.com/Gravity-Trampoline-smiles/",
+      apk: "https://github.com/SpectrumTechEngine/Gravity-Trampoline-smiles/releases/latest/download/gravity-trampoline-smiles.apk",
+      description: "Draw trampolines to bounce the ball past the frowny faces and into the portal. Made for kids.",
+      chips: ["Draw & bounce", "Kids"]
     },
     {
       name: "The Favourite Child",
@@ -396,44 +426,14 @@
       chips: ["Noise meter", "Family scores"]
     },
     {
-      name: "Gravity Trampoline: The Future",
-      emoji: "🛸",
+      name: "PottyMouthPocket",
+      emoji: "🤬",
       category: "game",
       status: "live",
-      link: "https://thespectrumtechengine.com/Gravity-Trampoline-future/",
-      apk: "https://github.com/SpectrumTechEngine/Gravity-Trampoline-future/releases/latest/download/gravity-trampoline-future.apk",
-      description: "The same draw-and-bounce puzzles in a futuristic world. Dodge the obstacles and land the ball in the portal.",
-      chips: ["Draw & bounce", "Pick a world"]
-    },
-    {
-      name: "Gravity Trampoline: The Smiles",
-      emoji: "😊",
-      category: "game",
-      status: "live",
-      link: "https://thespectrumtechengine.com/Gravity-Trampoline-smiles/",
-      apk: "https://github.com/SpectrumTechEngine/Gravity-Trampoline-smiles/releases/latest/download/gravity-trampoline-smiles.apk",
-      description: "Draw trampolines to bounce the ball past the frowny faces and into the portal. Made for kids.",
-      chips: ["Draw & bounce", "Kids"]
-    },
-    {
-      name: "Orbital One",
-      emoji: "🚀",
-      category: "game",
-      status: "live",
-      link: "https://thespectrumtechengine.com/Orbital-One/",
-      apk: "https://github.com/SpectrumTechEngine/Orbital-One/releases/latest/download/orbital-one.apk",
-      description: "Slingshot your ship around planets and into the portal. 192 levels across 12 universes.",
-      chips: ["Space physics"]
-    },
-    {
-      name: "The Kitchen Test",
-      emoji: "☕",
-      category: "game",
-      status: "live",
-      link: "https://thespectrumtechengine.com/kitchen-test/",
-      apk: "https://github.com/SpectrumTechEngine/kitchen-test/releases/latest/download/kitchen-test.apk",
-      description: "Making a cup of tea is harder than you think. Seven stages, one kettle, zero mercy.",
-      chips: ["Tilt or tap", "Win a certificate"]
+      link: "https://thespectrumtechengine.com/potty-mouth/",
+      apk: "https://github.com/SpectrumTechEngine/potty-mouth/releases/latest/download/potty-mouth.apk",
+      description: "The swear jar with a difference. Catch your friends, family or workmates swearing, they accept or dispute it, and at the end of the round the cleanest mouth collects the jar.",
+      chips: ["Group game", "Cleanest mouth wins"]
     },
     {
       name: "Kitchen Sync: To the Minute",
