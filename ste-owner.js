@@ -26,6 +26,11 @@
      STE.feature('new-birds')     true if that switch is on for this phone
      STE.features = { 'new-birds': 'What the switch does' }   (lists switches for the owner)
      STE.ownerTabs.push({ title, render(el, api) })           (extra owner tools for this app)
+     STE.feedback()               open the "Send feedback" box (messages land in the owner tools)
+
+   data-count="off" on the script tag: don't count this page (used by the /owner/ dashboard).
+   On the main site (data-app="site") and /owner/, the owner panel also loads ste-owner-site.js:
+   the all-apps dashboard, the everywhere banner, app of the week, feedback and Android builds.
    ========================================================= */
 (() => {
   if (window.STE && window.STE.loaded) return;
@@ -44,6 +49,9 @@
   // counts on the website and inside the Android apps (some carry their own copy of the app), never on a test computer
   const LIVE = /(^|\.)thespectrumtechengine\.com$/i.test(location.hostname) || NATIVE || new URLSearchParams(location.search).has('ste-live');
   const KIND = NATIVE ? 'apk' : (matchMedia('(display-mode: standalone)').matches || navigator.standalone) ? 'installed' : 'web';
+  const COUNT = !(me && me.dataset.count === 'off'); // the owner dashboard page doesn't count itself
+  const ALL = 'all-apps';                               // settings that reach every app at once (the everywhere banner)
+  const SITE_TOOLS = APP === 'site' || APP === 'owner'; // the main site and /owner/ also get the all-apps tools
   const TAPS = 5, TAP_WINDOW = 2500, MAX_WRONG = 5, LOCKOUT = 60 * 60 * 1000;
 
   /* ---------------- small helpers ---------------- */
@@ -79,7 +87,7 @@
   let owner = !!local.get('owner', false);  // this phone has unlocked the owner tools
   const pending = local.get('pending-' + APP, {}); // numbers not yet sent: { day: { field: n } }
   function bump(field, n = 1) {
-    if (!LIVE || (owner && !local.get('count-me', false))) return;
+    if (!LIVE || !COUNT || (owner && !local.get('count-me', false))) return;
     const d = day(), f = key(field); if (!f) return;
     (pending[d] = pending[d] || {})[f] = num(pending[d][f]) + n;
     local.set('pending-' + APP, pending);
@@ -110,7 +118,7 @@
 
   // one entry per phone, and today's "phones" / "new phones" numbers
   async function seePhone() {
-    if (!LIVE || (owner && !local.get('count-me', false))) return;
+    if (!LIVE || !COUNT || (owner && !local.get('count-me', false))) return;
     const today = day(), seen = local.get('seen-' + APP, null);
     if (seen === today) return;
     bump('phones'); if (!seen) bump('new_phones');
@@ -124,7 +132,7 @@
   }
 
   /* ---------------- messages from the owner: pop-up, banner, switches ---------------- */
-  let cfg = local.get('cfg-' + APP, {});
+  let cfg = local.get('cfg-' + APP, {}), allCfg = local.get('cfg-' + ALL, {});
   const featureOn = name => { const s = (cfg.switches || {})[key(name)]; return s === 'all' || (s === 'owner' && owner); };
   async function loadConfig() {
     if (!LIVE && !owner) return;
@@ -135,6 +143,8 @@
       if (a) { owner = a.exists(); local.set('owner', owner); }
       const s = await fsM.getDoc(fsM.doc(db, 'apps', APP, 'config', 'main'));
       cfg = s.exists() ? s.data() : {}; local.set('cfg-' + APP, cfg);
+      const g = await fsM.getDoc(fsM.doc(db, 'apps', ALL, 'config', 'main')).catch(() => null);
+      if (g) { allCfg = g.exists() ? g.data() : {}; local.set('cfg-' + ALL, allCfg); }
       showBanner(); showNotice();
       document.dispatchEvent(new CustomEvent('ste-config', { detail: cfg }));
     } catch (e) { console.warn(e); }
@@ -142,10 +152,12 @@
   function live(x) { return x && x.text && (!x.until || x.until > Date.now()); }
   function showBanner() {
     let b = document.getElementById('ste-banner');
-    if (!live(cfg.banner) || sessionStorage.getItem('ste-banner-x') === cfg.banner.text) { if (b) b.remove(); return; }
+    // this app's own banner wins; otherwise the everywhere banner
+    const ban = live(cfg.banner) ? cfg.banner : live(allCfg.banner) ? allCfg.banner : null;
+    if (!ban || sessionStorage.getItem('ste-banner-x') === ban.text) { if (b) b.remove(); return; }
     if (!b) { b = document.createElement('div'); b.id = 'ste-banner'; b.setAttribute('role', 'status'); document.body.appendChild(b); }
-    b.innerHTML = `<span>${esc(cfg.banner.text)}</span><button type="button" aria-label="Hide this message">×</button>`;
-    b.querySelector('button').onclick = () => { try { sessionStorage.setItem('ste-banner-x', cfg.banner.text); } catch (_) {} b.remove(); };
+    b.innerHTML = `<span>${esc(ban.text)}</span><button type="button" aria-label="Hide this message">×</button>`;
+    b.querySelector('button').onclick = () => { try { sessionStorage.setItem('ste-banner-x', ban.text); } catch (_) {} b.remove(); };
   }
   function showNotice() {
     const n = cfg.notice; if (!live(n) || local.get('notice-seen-' + APP) === n.id) return;
@@ -162,6 +174,12 @@
   .ste-layer{position:fixed;inset:0;z-index:2147483001;background:rgba(15,12,10,.6);display:grid;place-items:center;padding:16px;font:15px/1.45 system-ui,-apple-system,'Segoe UI',sans-serif;color:#1d1a17}
   .ste-card{width:min(100%,30rem);max-height:88dvh;overflow:auto;background:#fbf8f3;border-radius:16px;padding:18px 18px 16px;box-shadow:0 24px 60px -18px rgba(0,0,0,.6)}
   .ste-card.wide{width:min(100%,40rem)}
+  .ste-card.wider{width:min(100%,52rem)}
+  .ste-layer.full{padding:0;background:#16131c}
+  .ste-layer.full .ste-card{width:min(100%,60rem);height:100dvh;max-height:none;border-radius:0;padding:calc(18px + env(safe-area-inset-top,0px)) 16px 24px}
+  .ste-table th[data-sort]{cursor:pointer;text-decoration:underline dotted}
+  .ste-table td a{color:inherit}
+  .ste-fb{border:1.5px solid #ece5da;border-radius:12px;padding:.6rem .7rem;margin:.5rem 0}
   .ste-card h2{margin:0 0 .5rem;font-size:1.2rem}
   .ste-card h3{margin:1rem 0 .4rem;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:#6d6359}
   .ste-card p{margin:.35rem 0}
@@ -199,14 +217,14 @@
     .ste-btn.go{background:#efe8de;color:#1d1a17;border-color:#efe8de}
     .ste-tabs button{background:#2f2922;color:#efe8de}
     .ste-tabs button[aria-selected=true]{background:#efe8de;color:#1d1a17}
-    .ste-table th,.ste-table td{border-color:#3d362e}
+    .ste-table th,.ste-table td,.ste-fb{border-color:#3d362e}
     .ste-err{color:#ff8a6a}
   }`;
   document.head.appendChild(css);
 
   function layer(html, wide) {
-    const l = document.createElement('div'); l.className = 'ste-layer';
-    l.innerHTML = `<div class="ste-card${wide ? ' wide' : ''}" role="dialog" aria-modal="true">${html}</div>`;
+    const l = document.createElement('div'); l.className = 'ste-layer' + (wide === 'full' ? ' full' : '');
+    l.innerHTML = `<div class="ste-card${wide ? ' wide' : ''}${wide === 'wider' ? ' wider' : ''}" role="dialog" aria-modal="true">${html}</div>`;
     // keep taps inside the panel away from the game underneath
     for (const ev of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'keydown', 'click']) l.addEventListener(ev, e => e.stopPropagation());
     l.addEventListener('click', e => { if (e.target === l) l.remove(); });
@@ -264,25 +282,45 @@
   STE.features = STE.features || {};
   const LABEL = { opens: 'Opens', plays: 'Plays', shares: 'Shares', installs: 'Installs', phones: 'Phones', new_phones: 'New phones' };
 
-  function ownerPanel() {
-    const tabs = [['Stats', statsTab], ['Players', playersTab], ['Pop-up', popupTab], ['Banner', bannerTab], ['Switches', switchTab], ...STE.ownerTabs.map(t => [t.title, t.render]), ['This phone', phoneTab]];
-    const l = layer(`<div class="ste-top"><h2>Owner tools: ${esc(document.title.split(':')[0] || APP)}</h2><button class="ste-x" data-x aria-label="Close">×</button></div>
-      <div class="ste-tabs" role="tablist">${tabs.map(([t], i) => `<button role="tab" data-t="${i}" aria-selected="${i === 0}">${esc(t)}</button>`).join('')}</div><div data-body></div>`, true);
-    l.querySelector('[data-x]').onclick = () => l.remove();
+  async function ownerPanel() {
+    // the main site and /owner/ add the all-apps tools (dashboard, everywhere banner, app of the week, feedback, builds)
+    let site = [];
+    if (SITE_TOOLS) try { site = (await import(new URL('ste-owner-site.js', me.src).href)).default(api); } catch (e) { console.warn('STE: all-apps tools not loaded', e); }
+    const own = APP === 'owner' ? [] : [['Stats', statsTab], ['Players', playersTab], ['Pop-up', popupTab], ['Banner', bannerTab], ['Switches', switchTab]];
+    const tabs = [...site, ...own, ...STE.ownerTabs.map(t => [t.title, t.render]), ['This phone', phoneTab]];
+    const title = APP === 'owner' ? 'Owner dashboard' : APP === 'site' ? 'Owner tools: main website' : 'Owner tools: ' + (document.title.split(':')[0] || APP);
+    const l = layer(`<div class="ste-top"><h2>${esc(title)}</h2><button class="ste-x" data-x aria-label="Close">×</button></div>
+      <div class="ste-tabs" role="tablist">${tabs.map(([t], i) => `<button role="tab" data-t="${i}" aria-selected="${i === 0}">${esc(t)}</button>`).join('')}</div><div data-body></div>`, APP === 'owner' ? 'full' : SITE_TOOLS ? 'wider' : true);
+    l.querySelector('[data-x]').onclick = () => { l.remove(); document.dispatchEvent(new Event('ste-owner-closed')); };
     const body = l.querySelector('[data-body]');
     const show = i => { l.querySelectorAll('[data-t]').forEach(b => b.setAttribute('aria-selected', b.dataset.t == i)); body.innerHTML = '<p class="ste-muted">Loading…</p>'; Promise.resolve(tabs[i][1](body, api)).catch(e => { console.warn(e); body.innerHTML = `<p class="ste-err">That couldn't be loaded. ${esc(e && e.code === 'permission-denied' ? 'This phone is no longer unlocked.' : 'Check the internet connection.')}</p>`; }); };
     l.querySelector('[role=tablist]').onclick = e => { const b = e.target.closest('[data-t]'); if (b) show(+b.dataset.t); };
     show(0);
   }
-  const api = { fb, APP, day, daysAgo, esc, layer, saveConfig };
-  async function saveConfig(patch) {
+  const api = { fb, APP, ALL, day, daysAgo, esc, num, live, layer, saveConfig, saveConfigFor, getConfig, readDays, feedbackList, feedbackDelete };
+  async function saveConfig(patch) { return saveConfigFor(APP, patch); }
+  async function saveConfigFor(app, patch) {
     const { fsM, db } = await fb();
-    await fsM.setDoc(fsM.doc(db, 'apps', APP, 'config', 'main'), patch, { merge: true });
-    Object.assign(cfg, patch); local.set('cfg-' + APP, cfg); showBanner();
+    await fsM.setDoc(fsM.doc(db, 'apps', app, 'config', 'main'), patch, { merge: true });
+    if (app === APP) { Object.assign(cfg, patch); local.set('cfg-' + APP, cfg); }
+    if (app === ALL) { Object.assign(allCfg, patch); local.set('cfg-' + ALL, allCfg); }
+    showBanner();
+    if (app === APP) document.dispatchEvent(new CustomEvent('ste-config', { detail: cfg }));
   }
-  async function readDays(n) {
+  async function getConfig(app) {
     const { fsM, db } = await fb();
-    const q = fsM.query(fsM.collection(db, 'apps', APP, 'days'), fsM.where(fsM.documentId(), '>=', daysAgo(n - 1)));
+    const s = await fsM.getDoc(fsM.doc(db, 'apps', app, 'config', 'main'));
+    return s.exists() ? s.data() : {};
+  }
+  async function feedbackList(n) {
+    const { fsM, db } = await fb();
+    const snap = await fsM.getDocs(fsM.query(fsM.collection(db, 'feedback'), fsM.orderBy('at', 'desc'), fsM.limit(n)));
+    return snap.docs.map(d => ({ id: d.id, ...d.data(), at: d.data().at && d.data().at.toMillis ? d.data().at.toMillis() : 0 }));
+  }
+  async function feedbackDelete(id) { const { fsM, db } = await fb(); await fsM.deleteDoc(fsM.doc(db, 'feedback', id)); }
+  async function readDays(n, app = APP) {
+    const { fsM, db } = await fb();
+    const q = fsM.query(fsM.collection(db, 'apps', app, 'days'), fsM.where(fsM.documentId(), '>=', daysAgo(n - 1)));
     const snap = await fsM.getDocs(q), out = {};
     snap.forEach(d => { out[d.id] = d.data(); });
     return out;
@@ -396,6 +434,30 @@
     };
   }
 
+  /* ---------------- feedback from players (read in the owner tools on the main site) ---------------- */
+  function feedback() {
+    const l = layer(`<div class="ste-top"><h2>Send feedback</h2><button class="ste-x" data-x aria-label="Close">×</button></div>
+      <p class="ste-muted">Ideas, bugs, a game you'd love to see: Ste reads every message. Please don't put personal details in it. If you'd like a reply, email hello@thespectrumtechengine.com instead.</p>
+      <label>Your message <textarea data-text maxlength="1000"></textarea></label>
+      <p data-msg class="ste-muted"></p>
+      <div class="ste-row"><button class="ste-btn go" data-send>Send</button></div>`);
+    const msg = l.querySelector('[data-msg]'), send = l.querySelector('[data-send]'), box = l.querySelector('[data-text]');
+    l.querySelector('[data-x]').onclick = () => l.remove();
+    setTimeout(() => box.focus(), 50);
+    send.onclick = async () => {
+      const text = box.value.trim(); if (!text) { msg.textContent = 'Write a message first.'; return; }
+      if (Date.now() - num(local.get('fb-at', 0)) < 60000) { msg.textContent = 'Thanks! Please wait a minute before sending another.'; return; }
+      send.disabled = true; msg.textContent = 'Sending…';
+      try {
+        const { fsM, db, uid } = await fb();
+        await fsM.addDoc(fsM.collection(db, 'feedback'), { text, app: APP, kind: KIND, uid, at: fsM.serverTimestamp() });
+        local.set('fb-at', Date.now());
+        l.querySelector('.ste-card').innerHTML = `<h2>Thank you!</h2><p>Your message is on its way to Ste.</p><div class="ste-row"><button class="ste-btn go" data-ok>OK</button></div>`;
+        l.querySelector('[data-ok]').onclick = () => l.remove();
+      } catch (e) { console.warn(e); msg.textContent = "It couldn't be sent. Check the internet connection and try again."; send.disabled = false; }
+    };
+  }
+
   /* ---------------- what the app can call ---------------- */
   Object.assign(STE, {
     loaded: true, app: APP,
@@ -405,7 +467,9 @@
     feature: featureOn,
     isOwner: () => owner,
     openOwner,
+    feedback,
   });
+  document.dispatchEvent(new Event('ste-ready'));
   addEventListener('appinstalled', () => bump('installs'));
 
   // count this open, then load the owner's messages once the app has had its moment

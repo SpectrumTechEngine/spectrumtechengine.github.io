@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en-IE">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>STE Owner</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#16131c">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  html, body { margin: 0; min-height: 100%; background: #16131c; color: #f6f4fa; font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  main { min-height: 100dvh; display: grid; place-items: center; text-align: center; padding: 24px 16px; box-sizing: border-box; }
+  h1 { margin: 0 0 .4rem; font-size: 1.6rem; }
+  h1 b { color: #b45cff; text-shadow: 0 0 14px rgba(180,92,255,.8); }
+  p { color: #b3aac2; margin: 0 0 1.4rem; }
+  button { font: inherit; font-weight: 700; border: 0; border-radius: 999px; padding: .8rem 1.6rem; background: #b45cff; color: #fff; cursor: pointer; min-height: 48px; }
+</style>
+<!-- the owner tools; data-count="off" so this page never counts as a visit -->
+<script src="/ste-owner.js" data-app="owner" data-count="off" defer></script>
+</head>
+<body>
+<main>
+  <div>
+    <h1><b>STE</b> Owner</h1>
+    <p data-msg>Every app's numbers in one place.</p>
+    <button type="button" id="open">Open dashboard</button>
+  </div>
+</main>
+<script>
+  // Opens straight to the dashboard on an unlocked phone; otherwise asks for the owner code
+  const open = () => window.STE && STE.openOwner && STE.openOwner();
+  document.getElementById('open').addEventListener('click', open);
+  addEventListener('DOMContentLoaded', () => { if (window.STE && STE.isOwner && STE.isOwner()) open(); });
+</script>
+</body>
+</html>
