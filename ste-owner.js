@@ -47,7 +47,8 @@
   };
   const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
   // counts on the website and inside the Android apps (some carry their own copy of the app), never on a test computer
-  const LIVE = /(^|\.)thespectrumtechengine\.com$/i.test(location.hostname) || NATIVE || new URLSearchParams(location.search).has('ste-live');
+  // Live sites: the main domain plus apps with their own domain (lanternrooms.org = Lantern)
+  const LIVE = /(^|\.)(thespectrumtechengine\.com|lanternrooms\.org)$/i.test(location.hostname) || NATIVE || new URLSearchParams(location.search).has('ste-live');
   const KIND = NATIVE ? 'apk' : (matchMedia('(display-mode: standalone)').matches || navigator.standalone) ? 'installed' : 'web';
   const COUNT = !(me && me.dataset.count === 'off'); // the owner dashboard page doesn't count itself
   const ALL = 'all-apps';                               // settings that reach every app at once (the everywhere banner)
