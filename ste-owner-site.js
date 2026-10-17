@@ -13,6 +13,11 @@ const GH = 'SpectrumTechEngine';
 const BUILD_NOTE = {
   'prescription-meditation': 'Its Android app is on the website, not in GitHub Releases.',
 };
+// apps kept off the main site's list (shared by link only) but still tracked here
+const HIDDEN_APPS = [
+  { name: 'Plate Pal', emoji: '🍽️', status: 'live', link: 'https://thespectrumtechengine.com/plate-pal/',
+    apk: 'https://github.com/SpectrumTechEngine/plate-pal/releases/latest/download/plate-pal.apk', hidden: true },
+];
 
 /* ---------------- the app list, straight from the site ---------------- */
 let appsP = null;
@@ -25,7 +30,7 @@ function siteApps() {
       if (!m) throw new Error("The app list wasn't found in index.html");
       list = Function('"use strict"; return ' + m[1])();
     }
-    return list.map(a => {
+    return list.concat(HIDDEN_APPS).map(a => {
       const path = (new URL(a.link, location.origin).pathname.split('/').filter(Boolean)[0] || '');
       return { ...a, repo: path, path: path.toLowerCase(), id: OWNER_ID[path.toLowerCase()] || path.toLowerCase() };
     });
@@ -98,7 +103,7 @@ async function spotlight(el, api) {
   const { esc, num } = api;
   const [apps, cfg] = await Promise.all([siteApps(), api.getConfig('site')]);
   const s = cfg.spotlight || {}, on = s.path && (!s.until || s.until > Date.now());
-  const live = apps.filter(a => a.status === 'live');
+  const live = apps.filter(a => a.status === 'live' && !a.hidden); // hidden apps never go on the main site
   el.innerHTML = `<p class="ste-muted">Pins one app to the top of its list on the main site, with a gold "App of the week" glow and a link under the big logo.</p>
     <label>Which app <select data-app>${live.map(a => `<option value="${esc(a.path)}"${on && s.path === a.path ? ' selected' : ''}>${esc(a.emoji)} ${esc(a.name)}</option>`).join('')}</select></label>
     <label>For how long <select data-days><option value="7" selected>7 days</option><option value="14">14 days</option><option value="30">30 days</option><option value="0">Until I take it down</option></select></label>
