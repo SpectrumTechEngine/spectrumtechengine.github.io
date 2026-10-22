@@ -18,6 +18,7 @@ const HIDDEN_APPS = [
   { name: 'Plate Pal', emoji: '🍽️', status: 'live', link: 'https://thespectrumtechengine.com/plate-pal/',
     apk: 'https://github.com/SpectrumTechEngine/plate-pal/releases/latest/download/plate-pal.apk', hidden: true },
   { name: 'Due Date', emoji: '🍼', status: 'live', link: 'https://thespectrumtechengine.com/due-date/', hidden: true },
+  { name: 'Bean Feasa', emoji: '🔥', status: 'live', link: 'https://thespectrumtechengine.com/bean-feasa/', hidden: true },
 ];
 
 /* ---------------- the app list, straight from the site ---------------- */
