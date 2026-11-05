@@ -49,14 +49,15 @@ async function dashboard(el, api) {
   const { esc, num, daysAgo, day } = api;
   const apps = (await siteApps()).filter(a => a.status === 'live');
   const rows = [{ name: 'Main website', emoji: '🏠', id: 'site', link: '/' }, ...apps];
-  const data = await Promise.all(rows.map(a => api.readDays(30, a.id).catch(() => ({}))));
+  const data = await Promise.all(rows.map(a => api.readDays(40, a.id).catch(() => ({}))));
   const from = { today: day(), d7: daysAgo(6), d30: daysAgo(29) };
   const stats = rows.map((a, i) => {
     const days = Object.entries(data[i] || {});
     const s = (f, since) => days.reduce((t, [d, r]) => t + (d >= since ? num(r[f]) : 0), 0);
-    return { a, today: s('opens', from.today), opens7: s('opens', from.d7), plays7: s('plays', from.d7), phones7: s('phones', from.d7), new7: s('new_phones', from.d7), opens30: s('opens', from.d30) };
+    return { a, today: s('opens', from.today), opens7: s('opens', from.d7), plays7: s('plays', from.d7), phones7: s('phones', from.d7), new7: s('new_phones', from.d7), opens30: s('opens', from.d30), errors7: s('errors', from.d7) };
   });
-  const COLS = [['today', 'Opens today'], ['opens7', 'Opens 7d'], ['plays7', 'Plays 7d'], ['phones7', 'Phones 7d*'], ['new7', 'New 7d'], ['opens30', 'Opens 30d']];
+  const COLS = [['today', 'Opens today'], ['opens7', 'Opens 7d'], ['plays7', 'Plays 7d'], ['phones7', 'Phones 7d*'], ['new7', 'New 7d'], ['opens30', 'Opens 30d'], ['errors7', 'Errors 7d']];
+  const everyDay = data.flatMap(d => Object.entries(d || {})); // every app's days together, for the Visitors section
   const total = f => stats.reduce((t, r) => t + r[f], 0);
   const draw = () => {
     const sorted = [...stats].sort((x, y) => y[sortBy] - x[sortBy]);
@@ -74,7 +75,9 @@ async function dashboard(el, api) {
         <tr><th>All apps</th>${COLS.map(([k]) => `<th>${total(k)}</th>`).join('')}</tr>
       </table></div>
       <p class="ste-muted">* A phone used on 3 different days counts 3 times. Your own unlocked phone isn't counted.
-      For one app's full details, open it and tap its logo 5 times.</p>`;
+      For one app's full details, open it and tap its logo 5 times.</p>
+      <h2 style="margin-top:1.5rem">Visitors, all apps together</h2>
+      ${api.visitorsHTML(everyDay)}`;
     el.querySelectorAll('[data-sort]').forEach(th => th.onclick = () => { sortBy = th.dataset.sort; draw(); });
   };
   draw();

@@ -9,6 +9,10 @@
    - each day, per app: opens (website / installed / Android app), plays, shares, installs,
      how many phones used it and how many were new, plus the app's own details
      (e.g. which place was picked, average score)
+   - visitors: country (guessed from the phone's time zone; no IP address or location is used),
+     where they came from (Google, WhatsApp, another site...), phone type, the hour and weekday
+     they opened it, how long they stayed, whether they came back a week later, and short
+     error messages when the app breaks (at most 3 per visit)
    - one entry per phone: a random ID made by Firebase, first and last day seen. No names.
    Nothing is sent while testing on a computer (only on thespectrumtechengine.com),
    and nothing is counted from the owner's own unlocked phone.
@@ -102,20 +106,114 @@
       const { fsM, db } = await fb();
       for (const d of Object.keys(pending)) {
         const all = Object.entries(pending[d]);
-        while (all.length) {
-          const part = all.splice(0, 20), data = {}; // the rules allow a few numbers per write
-          for (const [f, n] of part) data[f] = fsM.increment(n);
-          await fsM.setDoc(fsM.doc(db, 'apps', APP, 'days', d), data, { merge: true });
-          for (const [f] of part) delete pending[d][f];
-          local.set('pending-' + APP, pending);
-        }
+        try {
+          while (all.length) {
+            const part = all.splice(0, 20), data = {}; // the rules allow a few numbers per write
+            for (const [f, n] of part) data[f] = fsM.increment(n);
+            await fsM.setDoc(fsM.doc(db, 'apps', APP, 'days', d), data, { merge: true });
+            for (const [f] of part) delete pending[d][f];
+            local.set('pending-' + APP, pending);
+          }
+        } catch (e) { if (e && e.code !== 'permission-denied') throw e; } // a refused day (e.g. full) is dropped, not retried forever
         delete pending[d]; local.set('pending-' + APP, pending);
       }
     } catch (e) { console.warn('STE: numbers will be sent later', e); }
     finally { flushing = false; }
   }
-  addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
-  addEventListener('pagehide', flush);
+
+  /* ---------------- visitors: country, where from, phone type, busy times, time spent, errors ---------------- */
+  // Country from the phone's time zone setting: no IP address or location is ever looked at
+  const TZ = Object.fromEntries(('Dublin ie London gb Belfast gb Isle_of_Man im Jersey je Guernsey gg Gibraltar gi Paris fr Berlin de Busingen de '
+    + 'Madrid es Canary es Ceuta es Lisbon pt Madeira pt Azores pt Rome it Vatican va San_Marino sm Malta mt Amsterdam nl Brussels be '
+    + 'Luxembourg lu Zurich ch Vaduz li Vienna at Prague cz Warsaw pl Budapest hu Bratislava sk Ljubljana si Zagreb hr Belgrade rs '
+    + 'Sarajevo ba Skopje mk Podgorica me Tirane al Athens gr Sofia bg Bucharest ro Chisinau md Kiev ua Kyiv ua Minsk by Vilnius lt '
+    + 'Riga lv Tallinn ee Helsinki fi Mariehamn ax Stockholm se Oslo no Copenhagen dk Faroe fo Reykjavik is Moscow ru Kaliningrad ru '
+    + 'Samara ru Yekaterinburg ru Novosibirsk ru Vladivostok ru Istanbul tr Nicosia cy Famagusta cy Monaco mc Andorra ad '
+    + 'New_York us Chicago us Denver us Los_Angeles us Phoenix us Anchorage us Honolulu us Detroit us Boise us Juneau us Adak us '
+    + 'Toronto ca Montreal ca Vancouver ca Edmonton ca Calgary ca Winnipeg ca Regina ca Halifax ca St_Johns ca Moncton ca Whitehorse ca '
+    + 'Mexico_City mx Cancun mx Tijuana mx Monterrey mx Merida mx Chihuahua mx Sao_Paulo br Bahia br Fortaleza br Recife br Manaus br '
+    + 'Santiago cl Bogota co Lima pe Caracas ve Montevideo uy Asuncion py La_Paz bo Guayaquil ec Panama pa Costa_Rica cr '
+    + 'Jamaica jm Puerto_Rico pr Havana cu Santo_Domingo do Barbados bb Port_of_Spain tt Nassau bs Bermuda bm '
+    + 'Kolkata in Calcutta in Karachi pk Dhaka bd Dubai ae Muscat om Riyadh sa Qatar qa Bahrain bh Kuwait kw Baghdad iq Amman jo '
+    + 'Beirut lb Jerusalem il Tel_Aviv il Gaza ps Hebron ps Tehran ir Kabul af Tashkent uz Almaty kz Tbilisi ge Yerevan am Baku az '
+    + 'Shanghai cn Urumqi cn Hong_Kong hk Macau mo Taipei tw Tokyo jp Seoul kr Pyongyang kp Ulaanbaatar mn Singapore sg '
+    + 'Kuala_Lumpur my Manila ph Jakarta id Makassar id Jayapura id Bangkok th Ho_Chi_Minh vn Saigon vn Phnom_Penh kh Vientiane la '
+    + 'Yangon mm Rangoon mm Kathmandu np Katmandu np Colombo lk Thimphu bt Maldives mv Brunei bn Dili tl '
+    + 'Auckland nz Chatham nz Fiji fj Port_Moresby pg Guam gu Tongatapu to Apia ws Noumea nc Tahiti pf '
+    + 'Lagos ng Johannesburg za Nairobi ke Cairo eg Casablanca ma Accra gh Algiers dz Tunis tn Tripoli ly Khartoum sd Addis_Ababa et '
+    + 'Kampala ug Dar_es_Salaam tz Kigali rw Lusaka zm Harare zw Maputo mz Windhoek na Gaborone bw Kinshasa cd Luanda ao Dakar sn '
+    + 'Abidjan ci Douala cm Mauritius mu Reunion re').split(' ').reduce((a, v, i, s) => (i % 2 || a.push([v, s[i + 1]]), a), []));
+  function country() {
+    let tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (_) {}
+    const p = tz.split('/');
+    if (p[0] === 'Australia') return 'au';
+    if (p[0] === 'US' || ['Indiana', 'Kentucky', 'North_Dakota'].includes(p[1])) return 'us';
+    if (p[0] === 'Canada') return 'ca';
+    if (p[1] === 'Argentina' || p[0] === 'America' && p[1] === 'Buenos_Aires') return 'ar';
+    if (TZ[p[p.length - 1]]) return TZ[p[p.length - 1]];
+    const m = /-([A-Za-z]{2})\b/.exec(navigator.language || ''); // no match: fall back to the phone's language region
+    return m ? m[1].toLowerCase() : 'zz';
+  }
+  function phoneType() {
+    const ua = navigator.userAgent || '';
+    if (/android/i.test(ua)) return /mobile/i.test(ua) ? 'android' : 'android_tablet';
+    if (/iphone|ipod/i.test(ua)) return 'iphone';
+    if (/ipad/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1)) return 'ipad';
+    if (/windows/i.test(ua)) return 'windows';
+    if (/cros/i.test(ua)) return 'chromebook';
+    if (/mac os/i.test(ua)) return 'mac';
+    if (/linux/i.test(ua)) return 'linux';
+    return 'other';
+  }
+  const SOURCES = [['android.gm', 'email'], ['outlook', 'email'], ['hotmail', 'email'], ['live.com', 'email'], ['mail.', 'email'],
+    ['google', 'google'], ['bing', 'bing'], ['duckduckgo', 'duckduckgo'], ['yahoo', 'yahoo'], ['ecosia', 'ecosia'], ['whatsapp', 'whatsapp'],
+    ['facebook', 'facebook'], ['fb.', 'facebook'], ['messenger', 'facebook'], ['instagram', 'instagram'], ['tiktok', 'tiktok'],
+    ['reddit', 'reddit'], ['t.co', 'x'], ['twitter', 'x'], ['x.com', 'x'], ['linkedin', 'linkedin'], ['youtube', 'youtube'],
+    ['pinterest', 'pinterest'], ['snapchat', 'snapchat'], ['github', 'github'], ['chatgpt', 'ai_chat'], ['openai', 'ai_chat'],
+    ['claude.ai', 'ai_chat'], ['perplexity', 'ai_chat'], ['gemini', 'ai_chat'], ['copilot', 'ai_chat']];
+  function cameFrom() {
+    if (KIND === 'apk') return 'android_app';
+    if (KIND === 'installed') return 'home_screen';
+    const q = new URLSearchParams(location.search), tag = key(q.get('from') || q.get('utm_source') || '').slice(0, 16);
+    if (tag) return 'tag_' + tag; // links you share can say where they're from, e.g. ?from=poster
+    let ref = null; try { ref = new URL(document.referrer); } catch (_) {}
+    if (!ref) return 'direct';
+    const h = ref.hostname.replace(/^www\./, ''), seg = u => (u.pathname.split('/')[1] || '').toLowerCase();
+    if (/(^|\.)(thespectrumtechengine\.com|lanternrooms\.org)$/.test(h)) return h === location.hostname.replace(/^www\./, '') && seg(ref) === seg(location) ? null : 'ste_site';
+    if (h === location.hostname) return null; // moving around inside the same app
+    const s = SOURCES.find(([m]) => h.includes(m));
+    return s ? s[1] : 'other_site';
+  }
+  function seeVisit() {
+    if (!LIVE || !COUNT || (owner && !local.get('count-me', false))) return;
+    const now = new Date();
+    bump('hr_' + String(now.getHours()).padStart(2, '0')); // the visitor's own clock
+    bump('wd_' + ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][now.getDay()]);
+    let fresh = true; try { fresh = !sessionStorage.getItem('ste-arrived-' + APP); sessionStorage.setItem('ste-arrived-' + APP, '1'); } catch (_) {}
+    if (fresh) { const src = cameFrom(); if (src) bump('rf_' + src); }
+  }
+  // how long the app was on screen (an hour or more left open counts as 4 hours at most)
+  let shownAt = document.visibilityState === 'visible' ? Date.now() : 0, visitCounted = false;
+  function addTime() {
+    if (!shownAt) return;
+    const s = Math.round(Math.min(Date.now() - shownAt, 4 * 36e5) / 1000); shownAt = 0;
+    if (s < 3) return;
+    bump('time_s', s); if (!visitCounted) { visitCounted = true; bump('time_n'); }
+  }
+  // errors: a short version of the message, at most 3 per visit
+  let errCount = 0;
+  function noteError(msg, file) {
+    msg = String(msg || '').replace(/^Uncaught\s+/i, '').trim();
+    if (errCount >= 3 || !msg || /^Script error\.?$/i.test(msg) || /ResizeObserver loop/i.test(msg)) return;
+    if (file && !/^https?:/i.test(file)) return; // browser add-ons, not the app
+    errCount++; bump('errors');
+    const k = key(msg).slice(0, 36); if (k) bump('er_' + k);
+  }
+  addEventListener('error', e => { if (e && e.message) noteError(e.message, e.filename); });
+  addEventListener('unhandledrejection', e => { const r = e && e.reason; if (r) noteError(r.message || String(r), ''); });
+
+  addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') shownAt = Date.now(); else { addTime(); flush(); } });
+  addEventListener('pagehide', () => { addTime(); flush(); });
 
   // one entry per phone, and today's "phones" / "new phones" numbers
   async function seePhone() {
@@ -123,6 +221,11 @@
     const today = day(), seen = local.get('seen-' + APP, null);
     if (seen === today) return;
     bump('phones'); if (!seen) bump('new_phones');
+    bump('cc_' + country()); bump('ph_' + phoneType());
+    // came back a week or more after its first day (counted once per phone)
+    let first = local.get('first-' + APP, null);
+    if (!first) { first = today; local.set('first-' + APP, first); }
+    if (seen && !local.get('back-' + APP, false) && Date.parse(today) - Date.parse(first) >= 7 * 864e5) { bump('came_back'); local.set('back-' + APP, true); }
     local.set('seen-' + APP, today);
     try {
       const { fsM, db, uid } = await fb();
@@ -287,7 +390,7 @@
     // the main site and /owner/ add the all-apps tools (dashboard, everywhere banner, app of the week, feedback, builds)
     let site = [];
     if (SITE_TOOLS) try { site = (await import(new URL('ste-owner-site.js', me.src).href)).default(api); } catch (e) { console.warn('STE: all-apps tools not loaded', e); }
-    const own = APP === 'owner' ? [] : [['Stats', statsTab], ['Players', playersTab], ['Pop-up', popupTab], ['Banner', bannerTab], ['Switches', switchTab]];
+    const own = APP === 'owner' ? [] : [['Stats', statsTab], ['Visitors', visitorsTab], ['Players', playersTab], ['Pop-up', popupTab], ['Banner', bannerTab], ['Switches', switchTab]];
     const tabs = [...site, ...own, ...STE.ownerTabs.map(t => [t.title, t.render]), ['This phone', phoneTab]];
     const title = APP === 'owner' ? 'Owner dashboard' : APP === 'site' ? 'Owner tools: main website' : 'Owner tools: ' + (document.title.split(':')[0] || APP);
     const l = layer(`<div class="ste-top"><h2>${esc(title)}</h2><button class="ste-x" data-x aria-label="Close">×</button></div>
@@ -298,7 +401,7 @@
     l.querySelector('[role=tablist]').onclick = e => { const b = e.target.closest('[data-t]'); if (b) show(+b.dataset.t); };
     show(0);
   }
-  const api = { fb, APP, ALL, day, daysAgo, esc, num, live, layer, saveConfig, saveConfigFor, getConfig, readDays, feedbackList, feedbackDelete };
+  const api = { fb, APP, ALL, day, daysAgo, esc, num, live, layer, saveConfig, saveConfigFor, getConfig, readDays, feedbackList, feedbackDelete, visitorsHTML };
   async function saveConfig(patch) { return saveConfigFor(APP, patch); }
   async function saveConfigFor(app, patch) {
     const { fsM, db } = await fb();
@@ -356,6 +459,51 @@
       </table></div>
       <p class="ste-muted">Numbers from the website only. Your own unlocked phone isn't counted (see "This phone").</p>`;
   }
+
+  /* ---------------- Visitors: one app, or (from ste-owner-site.js) every app together ---------------- */
+  const SRC_NAME = { direct: 'No link info (typed in, a bookmark, or a link in WhatsApp or another app)', home_screen: 'Home-screen app',
+    android_app: 'Android app', ste_site: 'Your main site or another of your apps', google: 'Google', bing: 'Bing', ai_chat: 'AI chat (ChatGPT etc.)',
+    other_site: 'Other websites', email: 'Email', x: 'X (Twitter)', duckduckgo: 'DuckDuckGo' };
+  const PH_NAME = { android: 'Android phone', android_tablet: 'Android tablet', iphone: 'iPhone', ipad: 'iPad', windows: 'Windows computer',
+    mac: 'Mac', chromebook: 'Chromebook', linux: 'Linux computer', other: 'Other' };
+  const words = k => k.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase());
+  const flag = cc => /^[a-z]{2}$/.test(cc) && cc !== 'zz' ? String.fromCodePoint(...[...cc.toUpperCase()].map(c => 127397 + c.charCodeAt(0))) + ' ' : '';
+  function countryName(cc) {
+    if (cc === 'zz') return 'Unknown';
+    try { return new Intl.DisplayNames(['en'], { type: 'region' }).of(cc.toUpperCase()) || cc.toUpperCase(); } catch (_) { return cc.toUpperCase(); }
+  }
+  function visitorsHTML(dayRows) { // dayRows: [[day, numbers], ...] from one app or many
+    const in30 = dayRows.filter(([d]) => d >= daysAgo(29)).map(([, r]) => r);
+    const cohort = dayRows.filter(([d]) => d <= daysAgo(7) && d >= daysAgo(36)).map(([, r]) => r);
+    const pre = p => { const o = {}; for (const r of in30) for (const [k, v] of Object.entries(r)) if (k.startsWith(p)) o[k.slice(p.length)] = num(o[k.slice(p.length)]) + num(v); return o; };
+    const bars = (o, name, n = 15) => {
+      const top = Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, n), max = top.length ? top[0][1] : 1, all = Object.values(o).reduce((a, v) => a + v, 0) || 1;
+      return top.length ? `<table class="ste-table">${top.map(([k, v]) => `<tr><td>${name(k)}</td><td style="width:38%"><div class="ste-bar" style="width:${Math.round(v / max * 100)}%"></div></td><td>${v}</td><td class="ste-muted">${Math.round(v / all * 100)}%</td></tr>`).join('')}</table>` : '<p class="ste-muted">Nothing yet.</p>';
+    };
+    const secs = sum(in30, 'time_s'), visits = sum(in30, 'time_n'), back = sum(in30, 'came_back'), newer = sum(cohort, 'new_phones'), errs = sum(in30, 'errors');
+    const avg = visits ? secs / visits : 0, avgTxt = visits ? `${Math.floor(avg / 60)}m ${String(Math.round(avg % 60)).padStart(2, '0')}s` : '–';
+    const hrs = pre('hr_'), hMax = Math.max(1, ...Object.values(hrs));
+    const wd = pre('wd_'), WD = [['mon', 'Monday'], ['tue', 'Tuesday'], ['wed', 'Wednesday'], ['thu', 'Thursday'], ['fri', 'Friday'], ['sat', 'Saturday'], ['sun', 'Sunday']], wMax = Math.max(1, ...WD.map(([k]) => num(wd[k])));
+    return `
+      <div class="ste-tiles">
+        <div class="ste-tile"><b>${avgTxt}</b><span>Average visit</span></div>
+        <div class="ste-tile"><b>${back}</b><span>Phones that came back a week or more later</span></div>
+        <div class="ste-tile"><b>${newer ? Math.min(100, Math.round(back / newer * 100)) + '%' : '–'}</b><span>Rough share of new phones that came back${newer ? ` (${newer} new 1 to 5 weeks ago)` : ''}</span></div>
+        <div class="ste-tile"><b>${errs}</b><span>Errors (last 30 days)</span></div>
+      </div>
+      <h3>Countries</h3>${bars(pre('cc_'), k => esc(flag(k) + countryName(k)))}
+      <h3>Where they came from</h3>${bars(pre('rf_'), k => esc(k.startsWith('tag_') ? 'Your link tagged "' + k.slice(4).replace(/_/g, ' ') + '"' : SRC_NAME[k] || words(k)))}
+      <h3>Phone type</h3>${bars(pre('ph_'), k => esc(PH_NAME[k] || words(k)))}
+      <h3>Busiest hours (their own clock)</h3>
+      <div style="display:flex;align-items:flex-end;gap:2px;height:80px">${Array.from({ length: 24 }, (_, h) => { const v = num(hrs[String(h).padStart(2, '0')]); return `<div title="${h}:00 to ${h + 1}:00: ${v}" style="flex:1;height:${Math.max(2, Math.round(v / hMax * 100))}%;background:${v ? '#c8743a' : '#ece5da'};border-radius:3px 3px 0 0"></div>`; }).join('')}</div>
+      <div style="display:flex;justify-content:space-between;font-size:.75rem" class="ste-muted"><span>midnight</span><span>6am</span><span>noon</span><span>6pm</span><span>11pm</span></div>
+      <h3>Busiest days</h3>
+      <table class="ste-table">${WD.map(([k, n]) => `<tr><td>${n}</td><td style="width:50%"><div class="ste-bar" style="width:${Math.round(num(wd[k]) / wMax * 100)}%"></div></td><td>${num(wd[k])}</td></tr>`).join('')}</table>
+      <h3>Errors</h3>${bars(pre('er_'), k => esc(k.replace(/_/g, ' ')), 12)}
+      <p class="ste-muted">All for the last 30 days. Country is a guess from the phone's time-zone setting (no location or IP address is used).
+      Counting of these started on 5 Nov 2026. Errors are shortened messages; tell Claude which app and message to look at.</p>`;
+  }
+  async function visitorsTab(el) { el.innerHTML = visitorsHTML(Object.entries(await readDays(40))); }
 
   async function playersTab(el) {
     const { fsM, db } = await fb(), col = fsM.collection(db, 'apps', APP, 'devices');
@@ -474,7 +622,7 @@
   addEventListener('appinstalled', () => bump('installs'));
 
   // count this open, then load the owner's messages once the app has had its moment
-  bump('opens'); bump('opens_' + KIND);
+  bump('opens'); bump('opens_' + KIND); seeVisit();
   const start = () => setTimeout(() => { seePhone(); loadConfig(); flush(); }, 1500);
   if (document.readyState === 'complete') start(); else addEventListener('load', start);
 })();
