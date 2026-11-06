@@ -12,6 +12,7 @@ const GH = 'SpectrumTechEngine';
 // apps whose Android app isn't built by their own public repo's android-apk.yml
 const BUILD_NOTE = {
   'prescription-meditation': 'Its Android app is on the website, not in GitHub Releases.',
+  'hells-kitchen': 'Its Android app is built on the PC (daily-zoom\\build.ps1) and uploaded to Releases by hand.',
 };
 // apps kept off the main site's list (shared by link only) but still tracked here
 const HIDDEN_APPS = [
@@ -19,6 +20,8 @@ const HIDDEN_APPS = [
     apk: 'https://github.com/SpectrumTechEngine/plate-pal/releases/latest/download/plate-pal.apk', hidden: true },
   { name: 'Due Date', emoji: '🍼', status: 'live', link: 'https://thespectrumtechengine.com/due-date/', hidden: true },
   { name: 'Bean Feasa', emoji: '🔥', status: 'live', link: 'https://thespectrumtechengine.com/bean-feasa/', hidden: true },
+  { name: 'Hells Kitchen', emoji: '🌅', status: 'live', link: 'https://thespectrumtechengine.com/hells-kitchen/',
+    apk: 'https://github.com/SpectrumTechEngine/hells-kitchen/releases/latest/download/hells-kitchen.apk', hidden: true },
 ];
 
 /* ---------------- the app list, straight from the site ---------------- */
