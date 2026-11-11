@@ -22,6 +22,7 @@ const HIDDEN_APPS = [
   { name: 'Bean Feasa', emoji: '🔥', status: 'live', link: 'https://thespectrumtechengine.com/bean-feasa/', hidden: true },
   { name: 'Hells Kitchen', emoji: '🌅', status: 'live', link: 'https://thespectrumtechengine.com/hells-kitchen/',
     apk: 'https://github.com/SpectrumTechEngine/hells-kitchen/releases/latest/download/hells-kitchen.apk', hidden: true },
+  { name: 'Laptop Cam', emoji: '📹', status: 'live', link: 'https://thespectrumtechengine.com/laptop-cam/', hidden: true },
 ];
 
 /* ---------------- the app list, straight from the site ---------------- */
