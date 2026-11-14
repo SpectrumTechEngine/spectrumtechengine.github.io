@@ -23,6 +23,7 @@ const HIDDEN_APPS = [
   { name: 'Hells Kitchen', emoji: '🌅', status: 'live', link: 'https://thespectrumtechengine.com/hells-kitchen/',
     apk: 'https://github.com/SpectrumTechEngine/hells-kitchen/releases/latest/download/hells-kitchen.apk', hidden: true },
   { name: 'Laptop Cam', emoji: '📹', status: 'live', link: 'https://thespectrumtechengine.com/laptop-cam/', hidden: true },
+  { name: 'Loop Pedal', emoji: '🔁', status: 'live', link: 'https://thespectrumtechengine.com/loop-pedal/', hidden: true },
 ];
 
 /* ---------------- the app list, straight from the site ---------------- */
