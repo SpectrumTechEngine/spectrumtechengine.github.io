@@ -24,6 +24,8 @@ const HIDDEN_APPS = [
     apk: 'https://github.com/SpectrumTechEngine/hells-kitchen/releases/latest/download/hells-kitchen.apk', hidden: true },
   { name: 'Laptop Cam', emoji: '📹', status: 'live', link: 'https://thespectrumtechengine.com/laptop-cam/', hidden: true },
   { name: 'Loop Pedal', emoji: '🔁', status: 'live', link: 'https://thespectrumtechengine.com/loop-pedal/', hidden: true },
+  { name: 'MadraPocalypse', emoji: '🐕', status: 'live', link: 'https://thespectrumtechengine.com/madrapocalypse/',
+    apk: 'https://github.com/SpectrumTechEngine/madrapocalypse/releases/latest/download/madrapocalypse.apk', hidden: true },
 ];
 
 /* ---------------- the app list, straight from the site ---------------- */
